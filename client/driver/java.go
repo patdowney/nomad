@@ -2,6 +2,7 @@ package driver
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -54,6 +55,7 @@ type javaHandle struct {
 	userPid         int
 	executor        executor.Executor
 	isolationConfig *dstructs.IsolationConfig
+	taskDir         string
 
 	killTimeout    time.Duration
 	maxKillTimeout time.Duration
@@ -279,6 +281,7 @@ func (d *JavaDriver) Start(ctx *ExecContext, task *structs.Task) (DriverHandle, 
 		executor:        execIntf,
 		userPid:         ps.Pid,
 		isolationConfig: ps.IsolationConfig,
+		taskDir:         ctx.TaskDir.Dir,
 		killTimeout:     GetKillTimeout(task.KillTimeout, maxKill),
 		maxKillTimeout:  maxKill,
 		version:         d.config.Version,
@@ -308,6 +311,7 @@ type javaId struct {
 	MaxKillTimeout  time.Duration
 	PluginConfig    *PluginReattachConfig
 	IsolationConfig *dstructs.IsolationConfig
+	TaskDir         string
 	UserPid         int
 }
 
@@ -370,6 +374,7 @@ func (h *javaHandle) ID() string {
 		PluginConfig:    NewPluginReattachConfig(h.pluginClient.ReattachConfig()),
 		UserPid:         h.userPid,
 		IsolationConfig: h.isolationConfig,
+		TaskDir:         h.taskDir,
 	}
 
 	data, err := json.Marshal(id)
@@ -390,6 +395,10 @@ func (h *javaHandle) Update(task *structs.Task) error {
 
 	// Update is not possible
 	return nil
+}
+
+func (h *javaHandle) Exec(ctx context.Context, cmd string, args []string) ([]byte, int, error) {
+	return execChroot(ctx, h.taskDir, cmd, args)
 }
 
 func (h *javaHandle) Signal(s os.Signal) error {

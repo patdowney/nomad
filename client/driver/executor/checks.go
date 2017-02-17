@@ -181,7 +181,7 @@ func (e *ExecScriptCheck) Run() *cstructs.CheckResult {
 				Duration:  endTime.Sub(ts),
 			}
 		case <-time.After(e.Timeout()):
-			errCh <- fmt.Errorf("timed out after waiting 30s")
+			errCh <- fmt.Errorf("timed out after waiting %s", e.Timeout())
 		}
 	}
 	return nil
