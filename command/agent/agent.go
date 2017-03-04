@@ -354,6 +354,10 @@ func (a *Agent) setupServer() error {
 	// Create the Nomad Server services for Consul
 	// TODO re-introduce HTTP/S checks when Consul 0.7.1 comes out
 	if *a.config.Consul.AutoAdvertise {
+		httpCheckProtocol := "http"
+		if conf.TLSConfig.EnableHTTP {
+			httpCheckProtocol = "https"
+		}
 		httpServ := &structs.Service{
 			Name:      a.config.Consul.ServerServiceName,
 			PortLabel: a.config.AdvertiseAddrs.HTTP,
@@ -363,7 +367,7 @@ func (a *Agent) setupServer() error {
 					Name:      "Nomad Server HTTP Check",
 					Type:      "http",
 					Path:      "/v1/status/peers",
-					Protocol:  "http",
+					Protocol:  httpCheckProtocol,
 					Interval:  serverHttpCheckInterval,
 					Timeout:   serverHttpCheckTimeout,
 					PortLabel: httpCheckAddr,
@@ -474,6 +478,10 @@ func (a *Agent) setupClient() error {
 	// TODO think how we can re-introduce HTTP/S checks when Consul 0.7.1 comes
 	// out
 	if *a.config.Consul.AutoAdvertise {
+		httpCheckProtocol := "http"
+		if conf.TLSConfig.EnableHTTP {
+			httpCheckProtocol = "https"
+		}
 		httpServ := &structs.Service{
 			Name:      a.config.Consul.ClientServiceName,
 			PortLabel: a.config.AdvertiseAddrs.HTTP,
@@ -483,7 +491,7 @@ func (a *Agent) setupClient() error {
 					Name:      "Nomad Client HTTP Check",
 					Type:      "http",
 					Path:      "/v1/agent/servers",
-					Protocol:  "http",
+					Protocol:  httpCheckProtocol,
 					Interval:  clientHttpCheckInterval,
 					Timeout:   clientHttpCheckTimeout,
 					PortLabel: httpCheckAddr,
